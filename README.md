@@ -1,164 +1,344 @@
-# Manga PDF Converter
 
-A Python script that automatically converts manga/comic book images organised in volume folders into individual PDF files. Perfect for creating digital manga volumes from scanned pages or downloaded chapters.
+# 📚 Manga PDF Converter
 
----
+A comprehensive Python script that converts manga image folders into organised PDF files with multiple processing modes. Originally created as a personal project to organise my manga collection for digital reading across devices.
 
+## 🆕 Recent Updates
 
-## 🚀 Features
+- **✨ Added Hybrid Mode**: Intelligent processing that groups volume folders while keeping standalone chapters separate
+- **📁 Organised Output Structure**: PDFs are now saved in a structured `PDF/[manga-name]/` directory
+- **📖 Enhanced Chapter Processing**: Each folder can now be converted to its own PDF
+- **🔍 Improved Volume Detection**: Better pattern matching for volume-based organisation
+- **🛡️ Safe Filename Handling**: Automatic sanitisation of problematic characters in filenames
+- **🎯 Command-line Interface**: Full argparse integration with help documentation
 
-- **Automatic Volume Detection**: Scans for folders starting with "v" followed by numbers (v1, v2, v10, etc.)
-- **Recursive Image Search**: Finds all images in subfolders within each volume
-- **Multiple Format Support**: Handles PNG, JPG, JPEG, BMP, GIF, TIFF, and WEBP files
-- **Robust Error Handling**: Continues processing even if individual images fail to load
-- **Memory Efficient**: Properly closes images after processing to prevent memory leaks
-- **macOS Compatible**: Designed to work within macOS file handle limitations
-- **Sorted Output**: Maintains proper page order in the final PDF
+## ✨ Features
 
-## 📋 Requirements
+- **🎛️ Three Processing Modes**: Choose between volumes, chapters, or hybrid processing
+- **📂 Automatic Output Organisation**: Creates organised output directories based on manga name
+- **🔄 Recursive Image Search**: Finds images in nested folder structures
+- **🖼️ Multiple Image Format Support**: PNG, JPG, JPEG, BMP, GIF, TIFF, WEBP
+- **⚡ Error Handling**: Continues processing even if individual images fail
+- **💾 Memory Efficient**: Properly manages image memory to prevent crashes
+- **🎨 Quality Preservation**: Maintains image quality during PDF conversion
+- **📊 Progress Tracking**: Real-time feedback on processing status
 
-- Python 3.6 or higher
-- Pillow (PIL) library
+## 🛠️ Installation
 
-## 🔧 Installation
+### Prerequisites
 
-1. Clone this repository:
+- **Python 3.6+** 🐍
+- **Pillow (PIL)** library 📷
+
+### 📦 Setup
+
+1. **Clone this repository:**
 ```bash
 git clone https://github.com/AlistairMacDiarmid/manga-pdf-converter.git
 cd manga-pdf-converter
 ```
 
-2. Install required dependencies:
+2. **Install required dependencies:**
 ```bash
 pip install Pillow
 ```
 
-Or using pip3:
+3. **Verify installation:**
 ```bash
-pip3 install Pillow
+python3 manga_pdf_converter.py --help
 ```
 
-## 📁 Expected Folder Structure
+## 🚀 Usage
 
-The script expects your manga to be organised in folders that start with "v" followed by numbers:
-
-```
-manga_collection/
-├── v1_chapter_01/
-│   ├── page_001.jpg
-│   ├── page_002.jpg
-│   └── page_003.jpg
-├── v1_chapter_02/
-│   ├── page_001.jpg
-│   └── page_002.jpg
-├── v2_chapter_01/
-│   ├── page_001.jpg
-│   ├── page_002.jpg
-│   └── page_003.jpg
-└── v2_chapter_02/
-    ├── page_001.jpg
-    └── page_002.jpg
-```
-
-## 🖥️ Usage
-
-### Basic Usage
+### 📝 Basic Syntax
 
 ```bash
-python3 manga_pdf_converter.py /path/to/your/manga/folder
+python3 manga_pdf_converter.py <path_to_manga_folder> [--mode MODE]
 ```
 
-### Example
+### 🎯 Processing Modes
+
+#### 1. 📚 Volumes Mode (Default)
+Perfect for manga organised with volume numbering systems.
 
 ```bash
-python3 manga_pdf_converter.py ~/Downloads/OnePiece
+python3 manga_pdf_converter.py /path/to/manga --mode volumes
+# or simply:
+python3 manga_pdf_converter.py /path/to/manga
 ```
 
-This will create PDF files in the current directory:
-- `v1.pdf` - Contains all pages from v1_chapter_01, v1_chapter_02, etc.
-- `v2.pdf` - Contains all pages from v2_chapter_01, v2_chapter_02, etc.
-
-### Output
-
-The script provides clear feedback during processing:
-
+**📁 Example folder structure:**
 ```
-Processing v1 (2 retraces)
-✅ Saved v1.pdf (45 pages)
-
-Processing v2 (3 retraces)
-✅ Saved v2.pdf (67 pages)
+One Piece/
+├── v1/
+│   ├── 001.jpg
+│   ├── 002.jpg
+│   └── ...
+├── v1.1/
+├── v1.2/
+├── v2/
+└── v2.1/
 ```
 
-## 🎯 How It Works
+**📄 Output:**
+- `PDF/One Piece/v1.pdf` (contains v1, v1.1, v1.2)
+- `PDF/One Piece/v2.pdf` (contains v2, v2.1)
 
-1. **Volume Detection**: Scans the root directory for folders matching the pattern `v[number]`
-2. **Grouping**: Groups related folders by volume number (e.g., v1_ch1, v1_ch2 → volume v1)
-3. **Image Collection**: Recursively searches each volume's folders for supported image files
-4. **PDF Creation**: Converts all images for each volume into a single PDF file
-5. **Cleanup**: Properly closes all images to free memory
+**✨ Best for:**
+- Official manga releases
+- Scanlations organised by volume
+- Series with clear volume divisions
 
-## 🛠️ Design Considerations
+#### 2. 📖 Chapters Mode
+Ideal for chapter-by-chapter organisation.
 
-### macOS File Handle Limitations
-
-This script was specifically designed to work within macOS limitations on the number of files that can be open simultaneously. The code:
-
-- Opens images one at a time rather than all at once
-- Immediately closes each image after copying it to memory
-- Uses `.copy()` to create independent image objects before closing the original
-- Processes images sequentially to avoid hitting file descriptor limits
-
-This approach ensures compatibility with macOS systems whilst maintaining good performance.
-
-## 🛠️ Customisation
-
-### Adding New Image Formats
-
-To support additional image formats, modify the `supported` tuple in the `get_image_files_recursive` function:
-
-```python
-supported = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.webp', '.svg')
+```bash
+python3 manga_pdf_converter.py /path/to/manga --mode chapters
 ```
 
-### Changing Folder Pattern
-
-To match different folder naming patterns, modify the regex in `get_all_retrace_folders`:
-
-```python
-# For folders like "Volume_1", "Volume_2"
-retrace_pattern = re.compile(r'^(Volume_\d+)', re.IGNORECASE)
-
-# For folders like "Vol1", "Vol2"
-retrace_pattern = re.compile(r'^(Vol\d+)', re.IGNORECASE)
+**📁 Example folder structure:**
+```
+Attack on Titan/
+├── Chapter 1 - To You, 2000 Years From Now/
+│   ├── 01.png
+│   ├── 02.png
+│   └── ...
+├── Chapter 2 - That Day/
+├── Chapter 3 - Night of the Disbanding Ceremony/
+└── Special Chapter - Ilse's Notebook/
 ```
 
-## 🐛 Troubleshooting
+**📄 Output:**
+- `PDF/Attack on Titan/Chapter 1 - To You, 2000 Years From Now.pdf`
+- `PDF/Attack on Titan/Chapter 2 - That Day.pdf`
+- `PDF/Attack on Titan/Chapter 3 - Night of the Disbanding Ceremony.pdf`
+- `PDF/Attack on Titan/Special Chapter - Ilse's Notebook.pdf`
 
-### Common Issues
+**✨ Best for:**
+- Weekly/monthly releases
+- Web manga
+- Individual chapter collections
 
-**"No images to convert" warning**
-- Check that your folders contain supported image formats
-- Verify folder names start with "v" followed by numbers
-- Ensure images aren't corrupted
+#### 3. 🔄 Hybrid Mode
+The smart choice for mixed organisation patterns.
 
-**"Failed to open first image" error**
-- The first image in the sequence may be corrupted
-- Try moving or removing the problematic image
-
-**Memory issues with large volumes**
-- The script processes images efficiently, but very large volumes (1000+ pages) may require more RAM
-- Consider splitting large volumes into smaller parts
-
-### Debugging
-
-Add the `-v` flag for verbose output (requires modifying the script):
-
-```python
-# Add this near the top of main()
-import logging
-logging.basicConfig(level=logging.DEBUG)
+```bash
+python3 manga_pdf_converter.py /path/to/manga --mode hybrid
 ```
+
+**📁 Example folder structure:**
+```
+Naruto/
+├── Vol.1 Chapter 1 - Uzumaki Naruto/
+├── Vol.1 Chapter 2 - Konohamaru/
+├── Vol.1 Chapter 3 - Sasuke Uchiha/
+├── Vol.2 Chapter 4 - Hatake Kakashi/
+├── Vol.2 Chapter 5 - Failure/
+├── Special Chapter 50 - Naruto's School Days/
+├── Omake - Behind the Scenes/
+└── Color Pages Collection/
+```
+
+**📄 Output:**
+- `PDF/Naruto/Vol1.pdf` (contains all Vol.1 chapters)
+- `PDF/Naruto/Vol2.pdf` (contains all Vol.2 chapters)
+- `PDF/Naruto/Special_Chapter_50_-_Naruto's_School_Days.pdf`
+- `PDF/Naruto/Omake_-_Behind_the_Scenes.pdf`
+- `PDF/Naruto/Color_Pages_Collection.pdf`
+
+**✨ Best for:**
+- Mixed collection sources
+- Series with volumes + extras
+- Complex folder hierarchies
+
+## 📊 Output Structure
+
+The script creates a clean, organised output structure:
+
+```
+📁 Original Location/
+├── 📁 Your Manga Folder/
+│   ├── 📁 Chapter folders...
+│   └── 🖼️ Image files...
+└── 📁 PDF/
+    └── 📁 Your Manga Folder/
+        ├── 📄 Volume_1.pdf
+        ├── 📄 Volume_2.pdf
+        └── 📄 ...
+```
+
+**🎯 Benefits:**
+- ✅ Original files remain untouched
+- ✅ Clear separation between source and output
+- ✅ Easy to find and organise PDFs
+- ✅ Maintains manga series structure
+
+## 🖼️ Supported Image Formats
+
+| Format | Extension | Notes |
+|--------|-----------|-------|
+| PNG | `.png` | ✅ Full support |
+| JPEG | `.jpg`, `.jpeg` | ✅ Full support |
+| BMP | `.bmp` | ✅ Full support |
+| GIF | `.gif` | ✅ Animated → Static |
+| TIFF | `.tiff` | ✅ Full support |
+| WebP | `.webp` | ✅ Full support |
+
+## 💡 Examples & Use Cases
+
+### 🎨 Converting Different Manga Types
+
+#### **🏴‍☠️ Long-running Series (One Piece style)**
+```bash
+# Large series with clear volume divisions
+python3 manga_pdf_converter.py "/Users/reader/Manga/One Piece" --mode volumes
+```
+
+#### **⚔️ Seasonal Manga (Attack on Titan style)**
+```bash
+# Chapter-focused series
+python3 manga_pdf_converter.py "/Users/reader/Manga/Attack on Titan" --mode chapters
+```
+
+#### **📚 Mixed Collection**
+```bash
+# When you have both volumes and standalone chapters
+python3 manga_pdf_converter.py "/Users/reader/Manga/My Collection" --mode hybrid
+```
+
+### 🛠️ Advanced Usage
+
+#### **📋 Command Help**
+```bash
+python3 manga_pdf_converter.py --help
+```
+
+#### **🔍 Testing with Sample Data**
+```bash
+# Test on a small folder first
+python3 manga_pdf_converter.py "/path/to/test/manga" --mode chapters
+```
+
+## ⚙️ How It Works
+
+### 🔄 Processing Pipeline
+
+1. **📂 Folder Scanning**: 
+   - Recursively scans the provided directory
+   - Identifies all supported image files
+   - Maintains alphabetical/numerical order
+
+2. **🎯 Grouping Logic**: 
+   - **Volumes**: Matches patterns like `v1`, `v2`, `vol1`, etc.
+   - **Chapters**: Each folder = one PDF
+   - **Hybrid**: Smart detection of volume patterns + standalone chapters
+
+3. **🖼️ Image Processing**:
+   - Opens images using PIL/Pillow
+   - Converts to RGB format for PDF compatibility
+   - Handles various image sizes and orientations
+
+4. **📄 PDF Generation**:
+   - Combines images into single PDF files
+   - Preserves image quality and aspect ratios
+   - Optimises file size without quality loss
+
+5. **📁 Output Organisation**:
+   - Creates structured directory hierarchy
+   - Uses safe filename conventions
+   - Maintains series organisation
+
+### 🧠 Smart Features
+
+- **🔍 Pattern Recognition**: Automatically detects volume numbering schemes
+- **🛡️ Error Recovery**: Continues processing even with corrupted files
+- **💾 Memory Management**: Efficiently handles large image collections
+- **📊 Progress Feedback**: Real-time status updates during processing
+
+## 🚨 Error Handling & Troubleshooting
+
+### ⚠️ Common Issues & Solutions
+
+#### **"No volume folders found"**
+```
+❌ Problem: Script can't find volume-numbered folders
+✅ Solution: 
+   • Check folder naming (should be v1, v2, etc.)
+   • Try --mode chapters or --mode hybrid
+   • Verify folder structure matches expected patterns
+```
+
+#### **"Failed to open image"**
+```
+❌ Problem: Corrupted or unreadable image files
+✅ Solution:
+   • Script automatically skips corrupted files
+   • Check image file integrity
+   • Ensure files have correct extensions
+```
+
+#### **Memory errors with large collections**
+```
+❌ Problem: System runs out of memory
+✅ Solution:
+   • Process smaller batches
+   • Close other applications
+   • Increase system virtual memory
+   • Process one series at a time
+```
+
+#### **PDFs not generating**
+```
+❌ Problem: No output files created
+✅ Solution:
+   • Check folder permissions
+   • Verify image files exist in subfolders
+   • Ensure sufficient disk space
+   • Check console output for specific errors
+```
+
+### 🔧 Performance Tips
+
+#### **🚀 Speed Optimisation**
+- Use SSD storage for faster I/O
+- Process series individually rather than in bulk
+- Close unnecessary applications during processing
+- Use smaller test folders to verify settings first
+
+#### **💾 Memory Management**
+- Monitor system memory usage
+- Process large series in smaller batches
+- Restart script between very large collections
+- Consider splitting massive series into parts
+
+#### **📁 Organisation Tips**
+- Use consistent folder naming conventions
+- Group similar series together
+- Keep original files as backup
+- Regularly clean up old PDF outputs
+
+## 🎯 Best Practices
+
+### 📋 Before Processing
+- [ ] **Backup original files** - Always keep originals safe
+- [ ] **Test on small sample** - Verify settings work correctly
+- [ ] **Check folder structure** - Ensure it matches expected patterns
+- [ ] **Free up disk space** - PDFs can be large files
+- [ ] **Close other applications** - Maximise available memory
+
+### ⚡ During Processing
+- [ ] **Monitor progress** - Watch console output for errors
+- [ ] **Don't interrupt** - Let the process complete fully
+- [ ] **Check system resources** - Ensure adequate memory/CPU
+- [ ] **Be patient** - Large collections take time
+
+### ✅ After Processing
+- [ ] **Verify PDF quality** - Open a few files to check
+- [ ] **Check completeness** - Ensure all expected PDFs were created
+- [ ] **Organise output** - Move PDFs to your reading device/app
+- [ ] **Clean up if needed** - Remove any incomplete or error files
+
+---
 
 ## 📝 Licence
 
@@ -170,34 +350,66 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ### Development Setup
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Test thoroughly
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
+1. Fork the repository  
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)  
+3. Make your changes  
+4. Test thoroughly  
+5. Commit your changes (`git commit -m 'Add amazing feature'`)  
+6. Push to the branch (`git push origin feature/amazing-feature`)  
 7. Open a Pull Request
 
 ## 🔄 Changelog
 
+### v1.0.1
+- Added Hybrid Mode for mixed folder structures  
+- Improved volume folder detection with enhanced regex patterns  
+- Organised PDFs into `PDF/[manga-name]/` directories  
+- Added safe filename sanitisation to avoid invalid characters  
+- Implemented full command-line interface with argparse and help documentation  
+- Enhanced error handling and progress reporting
+
 ### v1.0.0
-- Initial release
-- Basic volume detection and PDF conversion
-- Support for common image formats
+- Initial release  
+- Basic volume detection and PDF conversion  
+- Support for common image formats  
 - Error handling and memory management
 
 ## 📧 Support
 
-If you encounter any issues or have questions, please:
-1. Check the troubleshooting section above
-2. Search existing [GitHub issues](https://github.com/AlistairMacDiarmid/manga-pdf-converter/issues)
+If you encounter any issues or have questions, please:  
+1. Check the troubleshooting section above  
+2. Search existing [GitHub issues](https://github.com/AlistairMacDiarmid/manga-pdf-converter/issues)  
 3. Create a new issue with detailed information about your problem
 
 ## ⭐ Acknowledgements
 
-- Built with [Pillow](https://pillow.readthedocs.io/) for image processing
-- Inspired by the need to organise digital manga collections
+- Built with [Pillow](https://pillow.readthedocs.io/) for image processing  
+- Inspired by the need to organise digital manga collections  
 
 ---
+
+## 🎨 About This Project
+
+This started as a personal solution to a very specific problem: I had thousands of manga images scattered across different folder structures, and I wanted to read them comfortably on my tablet. What began as a simple script to combine images into PDFs evolved into a comprehensive tool that handles the various ways manga collections are organised.
+
+### 🌟 Why This Tool Exists
+- **📱 Digital Reading**: Perfect PDFs for tablets and e-readers  
+- **📚 Organisation**: Clean, consistent file structure  
+- **💾 Space Efficiency**: Compressed, organised storage  
+- **🔄 Flexibility**: Handles different organisation schemes  
+- **⚡ Automation**: No more manual PDF creation
+
+### 🤝 Community
+If you find this useful for your own manga organisation, that's awesome! Feel free to:  
+- 🐛 Report issues you encounter  
+- 💡 Suggest improvements or new features  
+- 🌟 Share how you're using it  
+- 🔧 Contribute enhancements
+
+The goal is to make manga collection management as painless as possible for everyone who loves digital reading!
+
+---
+
+**Happy reading! 📖✨**
 
 **Note**: This tool is intended for personal use with legally obtained manga/comic content. Please respect copyright laws and only use with content you own or have permission to convert.
