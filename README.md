@@ -1,10 +1,9 @@
 # Manga PDF Converter
 
-A Python script that automatically converts manga/comic book images organized in volume folders into individual PDF files. Perfect for creating digital manga volumes from scanned pages or downloaded chapters.
+A Python script that automatically converts manga/comic book images organised in volume folders into individual PDF files. Perfect for creating digital manga volumes from scanned pages or downloaded chapters.
 
 ---
 
-*Click the download button below to save this README as a markdown file for your GitHub repository.*
 
 ## 🚀 Features
 
@@ -25,7 +24,7 @@ A Python script that automatically converts manga/comic book images organized in
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/manga-pdf-converter.git
+git clone https://github.com/AlistairMacDiarmid/manga-pdf-converter.git
 cd manga-pdf-converter
 ```
 
@@ -41,7 +40,7 @@ pip3 install Pillow
 
 ## 📁 Expected Folder Structure
 
-The script expects your manga to be organized in folders that start with "v" followed by numbers:
+The script expects your manga to be organised in folders that start with "v" followed by numbers:
 
 ```
 manga_collection/
@@ -110,9 +109,9 @@ This script was specifically designed to work within macOS limitations on the nu
 - Uses `.copy()` to create independent image objects before closing the original
 - Processes images sequentially to avoid hitting file descriptor limits
 
-This approach ensures compatibility with macOS systems while maintaining good performance.
+This approach ensures compatibility with macOS systems whilst maintaining good performance.
 
-## 🛠️ Customization
+## 🛠️ Customisation
 
 ### Adding New Image Formats
 
@@ -161,7 +160,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
-## 📝 License
+## 📝 Licence
 
 This project is released into the public domain. Feel free to use, modify, and distribute as needed.
 
@@ -191,13 +190,13 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 If you encounter any issues or have questions, please:
 1. Check the troubleshooting section above
-2. Search existing [GitHub issues](https://github.com/yourusername/manga-pdf-converter/issues)
+2. Search existing [GitHub issues](https://github.com/AlistairMacDiarmid/manga-pdf-converter/issues)
 3. Create a new issue with detailed information about your problem
 
-## ⭐ Acknowledgments
+## ⭐ Acknowledgements
 
 - Built with [Pillow](https://pillow.readthedocs.io/) for image processing
-- Inspired by the need to organize digital manga collections
+- Inspired by the need to organise digital manga collections
 
 ---
 
