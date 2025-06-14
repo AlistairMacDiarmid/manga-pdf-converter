@@ -43,6 +43,7 @@ def get_all_retrace_folders(root):
     # Return the grouped dictionary of volume folders
     return volumes
 
+
 def get_all_chapter_folders(root):
     """
     Gets all subdirectories in the root folder for chapter mode
@@ -50,16 +51,17 @@ def get_all_chapter_folders(root):
     """
     chapters = []
 
-    #Loop through all items in the root directory
+    # Loop through all items in the root directory
     for folder in sorted(os.listdir(root)):
-        #Create the full path to the folder
+        # Create the full path to the folder
         full_path = os.path.join(root, folder)
 
-        #check if it's actually a directory (not a file)
+        # check if it's actually a directory (not a file)
         if os.path.isdir(full_path):
             chapters.append((folder, full_path))
 
     return chapters
+
 
 def get_hybrid_groups(root):
     """
@@ -103,7 +105,72 @@ def get_image_files_recursive(folder):
     return files
 
 
-def convert_images_to_pdf(image_paths, output_path):
+def delete_image_files(image_paths):
+    """
+    Deletes the provided image files and removes empty directories
+    """
+    deleted_count = 0
+    directories_to_check = set()
+
+    for image_path in image_paths:
+        try:
+            if os.path.exists(image_path):
+                # Add directory to the set for later cleanup
+                directories_to_check.add(os.path.dirname(image_path))
+                os.remove(image_path)
+                deleted_count += 1
+        except OSError as e:
+            print(f"Warning: could not delete {image_path}: {e}")
+
+    # Cleanup empty directories
+    for directory in directories_to_check:
+        try:
+            # Only remove if directory is empty
+            if os.path.exists(directory) and not os.listdir(directory):
+                os.rmdir(directory)
+                print(f"Removed empty directory {directory}")
+        except OSError:
+            # Directory not empty or other error. Skip
+            pass
+
+    if deleted_count > 0:
+        print(f"Deleted {deleted_count} image files")
+
+
+def cleanup_empty_directories_recursive(root_path):
+    """
+    Recursively removes empty directories starting from the deepest level.
+    Returns True if the root directory was also removed (completely empty).
+    """
+    if not os.path.exists(root_path) or not os.path.isdir(root_path):
+        return False
+
+    removed_root = False
+
+    # First, recursively clean up subdirectories
+    try:
+        for item in os.listdir(root_path):
+            item_path = os.path.join(root_path, item)
+            if os.path.isdir(item_path):
+                cleanup_empty_directories_recursive(item_path)
+    except OSError:
+        # Directory might have been deleted or inaccessible
+        pass
+
+    # Then try to remove the current directory if it's empty
+    try:
+        if os.path.exists(root_path) and not os.listdir(root_path):
+            os.rmdir(root_path)
+            print(f"Removed empty directory: {root_path}")
+            removed_root = True
+    except OSError:
+        # Directory not empty or other error
+        pass
+
+    return removed_root
+
+
+def convert_images_to_pdf(image_paths, output_path, delete_images=False):
     """
     Takes a list of image file paths and converts them into a single PDF file.
     """
@@ -131,23 +198,62 @@ def convert_images_to_pdf(image_paths, output_path):
             # If an image fails to open, skip it but continue with others
             print(f"Skipping image {path}: {e}")
 
-    # Save the first image as PDF, with all other images appended
-    first.save(output_path, save_all=True, append_images=rest)
+    try:
+        # Save the first image as PDF, with all other images appended
+        first.save(output_path, save_all=True, append_images=rest)
 
-    # Clean up memory by closing all images
-    first.close()
-    for img in rest:
-        img.close()
+        # Print success message with page count
+        print(f"Saved {output_path} ({len(image_paths)} pages)")
 
-    # Print success message with page count
-    print(f"Saved {output_path} ({len(image_paths)} pages)")
+        # Delete source images if requested and conversion was successful
+        if delete_images:
+            delete_image_files(image_paths)
+    except Exception as e:
+        print(f"Failed to save PDF {output_path}: {e}")
+        return
+    finally:
+        # Clean up memory by closing all images
+        first.close()
+        for img in rest:
+            img.close()
 
 
-def process_volumes(root):
+def process_folder_groups(folder_groups, output_dir, delete_images=False):
     """
-    Process images by grouping them into volumes
+    Generic function to process grouped folders into PDFs
+    folder_groups: dict like {"group_name": [folder_paths]}
     """
-    #Get all volume folders organised by volume name
+    for group_name, folders in sorted(folder_groups.items()):
+        print(f"\nProcessing {group_name} ({len(folders)} folder{'s' if len(folders) > 1 else ''})")
+
+        all_images = []
+        for folder in sorted(folders):
+            images = get_image_files_recursive(folder)
+            all_images.extend(images)
+
+        if not all_images:
+            print(f"No images found in {group_name}")
+            continue
+
+        # Clean group name for filename
+        safe_group_name = re.sub(r'[<>:"/\\|?*]', '_', group_name)
+        output_pdf = os.path.join(output_dir, f"{safe_group_name}.pdf")
+        convert_images_to_pdf(all_images, output_pdf, delete_images)
+
+
+def cleanup_after_processing(root, delete_images):
+    """
+    Helper function to handle cleanup after processing
+    """
+    root_was_removed = cleanup_empty_directories_recursive(root)
+    if root_was_removed:
+        print(f"Removed empty manga directory: {root}")
+    elif delete_images:
+        print(f"Warning: Could not remove manga directory (may not be empty): {root}")
+
+
+def process_volumes(root, delete_images=False):
+    """Process images by grouping them into volumes"""
     volume_folders = get_all_retrace_folders(root)
 
     if not volume_folders:
@@ -158,29 +264,15 @@ def process_volumes(root):
     output_dir = os.path.join(os.path.dirname(root), OUTPUT_DIR_NAME, manga_name)
     os.makedirs(output_dir, exist_ok=True)
 
-    #Process each volume
-    for volume, folders in sorted(volume_folders.items()):
-        print(f"\nProcessing {volume} ({len(folders)} retraces)")
+    print("Processing in VOLUMES mode (grouping by volume name)")
+    process_folder_groups(volume_folders, output_dir, delete_images)
 
-        #Collect all images from all folders belonging to this volume
-        all_images = []
-        for folder in sorted(folders):
-            images = get_image_files_recursive(folder)
-            all_images.extend(images)
+    # Always clean up empty directories after processing
+    cleanup_after_processing(root, delete_images)
 
 
-        #Create output PDF filename (e.g., "v1.pdf", "v2.pdf")
-        output_pdf = os.path.join(output_dir, f"{volume}.pdf")
-
-        #convert all images for this volume into a single PDF
-        convert_images_to_pdf(all_images, output_pdf)
-
-
-def process_chapters(root):
-    """
-    Process images by converting each folder into its own PDF
-    """
-    #Get all chapter folders
+def process_chapters(root, delete_images=False):
+    """Process images by converting each folder into its own PDF"""
     chapter_folders = get_all_chapter_folders(root)
 
     if not chapter_folders:
@@ -189,31 +281,22 @@ def process_chapters(root):
 
     print(f"Found {len(chapter_folders)} folders to process")
 
+    # Convert to the same format as other grouping functions
+    chapter_groups = {folder_name: [folder_path] for folder_name, folder_path in chapter_folders}
+
     manga_name = os.path.basename(os.path.abspath(root))
     output_dir = os.path.join(os.path.dirname(root), OUTPUT_DIR_NAME, manga_name)
     os.makedirs(output_dir, exist_ok=True)
 
-    #Process each chapter folder
-    for folder_name, folder_path in chapter_folders:
-        print(f"\nProcessing folder: {folder_name}")
+    print("Processing in CHAPTERS mode (each folder becomes a PDF)")
+    process_folder_groups(chapter_groups, output_dir, delete_images)
 
-        #Get all images in this folder
-        images = get_image_files_recursive(folder_path)
-
-        if not images:
-            print(f"No images found in {folder_name}")
-            continue
-
-        #Create output PDF filename based on folder name
-        #Replace any characters that might be problematic in filenames
-        safe_folder_name = re.sub(r'[<>:"/\\|?*]', '_', folder_name)
-        output_pdf = os.path.join(output_dir, f"{safe_folder_name}.pdf")
-
-        #Convert images to PDF
-        convert_images_to_pdf(images, output_pdf)
+    # Always clean up empty directories after processing
+    cleanup_after_processing(root, delete_images)
 
 
-def process_hybrid(root):
+def process_hybrid(root, delete_images=False):
+    """Process images using hybrid grouping (volumes + individual chapters)"""
     hybrid_groups = get_hybrid_groups(root)
 
     if not hybrid_groups:
@@ -224,19 +307,11 @@ def process_hybrid(root):
     output_dir = os.path.join(os.path.dirname(root), OUTPUT_DIR_NAME, manga_name)
     os.makedirs(output_dir, exist_ok=True)
 
-    for group_name, folders in sorted(hybrid_groups.items()):
-        print(f"\nProcessing {group_name} ({len(folders)} folders)")
-        all_images = []
-        for folder in folders:
-            images = get_image_files_recursive(folder)
-            all_images.extend(images)
+    print("Processing in HYBRID mode (grouping volumes and individual chapters)")
+    process_folder_groups(hybrid_groups, output_dir, delete_images)
 
-        if not all_images:
-            print(f"No images found in {group_name}")
-            continue
-
-        output_pdf = os.path.join(output_dir, f"{group_name}.pdf")
-        convert_images_to_pdf(all_images, output_pdf)
+    # Always clean up empty directories after processing
+    cleanup_after_processing(root, delete_images)
 
 
 def main():
@@ -247,7 +322,16 @@ def main():
     parser = argparse.ArgumentParser(
         description="Convert manga images to PDF files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""\nExamples:\n  # Convert by volumes (groups folders like v1, v1.1, v1.2 into v1.pdf)\n  python3 images_to_volumes.py /path/to/manga --mode volumes\n\n  # Convert each folder to its own PDF\n  python3 images_to_volumes.py /path/to/manga --mode chapters\n        """
+        epilog="""\nExamples:
+  # Convert by volumes (groups folders like v1, v1.1, v1.2 into v1.pdf)
+  python3 images_to_volumes.py /path/to/manga --mode volumes
+
+  # Convert each folder to its own PDF
+  python3 images_to_volumes.py /path/to/manga --mode chapters
+
+  # Use hybrid mode (mix of volumes and individual chapters)
+  python3 images_to_volumes.py /path/to/manga --mode hybrid
+        """
     )
 
     parser.add_argument(
@@ -258,8 +342,14 @@ def main():
     parser.add_argument(
         '--mode',
         choices=['volumes', 'chapters', 'hybrid'],
-        default='volumes',
-        help='Processing mode: "volumes" groups folders by volume name, "chapters" converts each folder separately, "hybrid" mixes both (default: volumes)'
+        default='hybrid',
+        help='Processing mode: "volumes" groups folders by volume name, "chapters" converts each folder separately, "hybrid" mixes both (default: hybrid)'
+    )
+
+    parser.add_argument(
+        '--delete-images',
+        action='store_true',
+        help='Delete source images after successful PDF conversion (also removes empty directories)'
     )
 
     # Parse command-line arguments
@@ -270,16 +360,21 @@ def main():
         print(f"'{args.path}' is not a valid folder.")
         sys.exit(1)
 
+    # Warn user if they are about to delete images
+    if args.delete_images:
+        print("WARNING: Image files and empty directories will be deleted after conversion!")
+        response = input("Are you sure you want to continue (Y/N)? ")
+        if response.lower() not in ['y', 'yes']:
+            print("Operation cancelled")
+            sys.exit(0)
+
     # Process based on selected mode
     if args.mode == 'volumes':
-        print("Processing in VOLUMES mode (grouping by volume name)")
-        process_volumes(args.path)
-    elif args.mode == 'hybrid':
-        print("Processing in HYBRID mode (grouping volumes and individual chapters)")
-        process_hybrid(args.path)
+        process_volumes(args.path, args.delete_images)
+    elif args.mode == 'chapters':
+        process_chapters(args.path, args.delete_images)
     else:
-        print("Processing in CHAPTERS mode (each folder becomes a PDF)")
-        process_chapters(args.path)
+        process_hybrid(args.path, args.delete_images)
 
 
 # This runs only when the script is executed directly
