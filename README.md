@@ -2,21 +2,27 @@
 
 A comprehensive Python script that converts manga image folders into organised PDF files with multiple processing modes. Originally created as a personal project to organise my manga collection for digital reading across devices.
 
+**🎉 Now available with both Command-Line Interface and Graphical User Interface!**
+
 ## 🆕 Recent Updates
 
+- **🖥️ NEW: Graphical User Interface (GUI)** - Modern desktop application with intuitive controls
+- **🎨 Dark Theme Interface** - Eye-friendly dark mode with modern styling
+- **⚡ Real-time Progress Tracking** - Visual progress indicators and live logging
+- **🛡️ Enhanced Safety Features** - Confirmation dialogs and better error handling
 - **🐛 Fixed Hybrid Mode Bug**: Resolved duplicate processing and cleanup logic in hybrid mode
 - **🔧 Code Refactoring**: Added helper function for cleanup to eliminate code duplication
 - **⚙️ Default Mode Update**: Hybrid mode is now the default (most versatile option)
 - **✨ Enhanced Hybrid Mode**: Intelligent processing that groups volume folders while keeping standalone chapters separate
 - **📁 Organised Output Structure**: PDFs are now saved in a structured `PDF/[manga-name]/` directory
-- **📖 Enhanced Chapter Processing**: Each folder can now be converted to its own PDF
-- **🔍 Improved Volume Detection**: Better pattern matching for volume-based organisation
-- **🛡️ Safe Filename Handling**: Automatic sanitisation of problematic characters in filenames
-- **🎯 Command-line Interface**: Full argparse integration with help documentation
-- **🗑️ Optional Image Deletion**: Safely delete source images after successful conversion
 
 ## ✨ Features
 
+### 🖥️ Two Ways to Use
+- **🎨 Graphical Interface**: User-friendly desktop application with drag-and-drop functionality
+- **⌨️ Command Line**: Traditional CLI for automation and advanced users
+
+### 🎛️ Core Features
 - **🎛️ Three Processing Modes**: Choose between volumes, chapters, or hybrid processing
 - **📂 Automatic Output Organisation**: Creates organised output directories based on manga name
 - **🔄 Recursive Image Search**: Finds images in nested folder structures
@@ -28,12 +34,22 @@ A comprehensive Python script that converts manga image folders into organised P
 - **🧹 Cleanup Options**: Optional deletion of source images and empty directories
 - **🛡️ Safety Features**: Confirmation prompts before destructive operations
 
+### 🎨 GUI-Specific Features
+- **🌙 Modern Dark Theme**: Eye-friendly interface with contemporary styling
+- **📁 Visual Folder Selection**: Built-in folder browser with path display
+- **📊 Real-time Logging**: Live conversion progress with detailed status updates
+- **🎯 Mode Selection**: Easy radio button selection for processing modes
+- **⚠️ Safety Warnings**: Clear indicators for destructive operations
+- **🔄 Thread-Safe Processing**: Non-blocking interface that remains responsive
+- **❌ Cancellation Support**: Stop processing at any time with graceful cleanup
+
 ## 🛠️ Installation
 
 ### Prerequisites
 
 - **Python 3.6+** 🐍
 - **Pillow (PIL)** library 📷
+- **PyQt5** (for GUI version) 🖥️
 
 ### 📦 Setup
 
@@ -44,26 +60,64 @@ cd manga-pdf-converter
 ```
 
 2. **Install required dependencies:**
+
+**For Command-Line Version Only:**
 ```bash
 pip install Pillow
 ```
 
+**For GUI Version (includes CLI):**
+```bash
+pip install Pillow PyQt5
+```
+
 3. **Verify installation:**
+
+**Command-Line Version:**
 ```bash
 python3 manga_pdf_converter.py --help
 ```
 
+**GUI Version:**
+```bash
+python3 manga_gui.py
+```
+
 ## 🚀 Usage
 
-### 📝 Basic Syntax
+### 🖥️ Graphical User Interface (Recommended for Most Users)
+
+Launch the modern desktop application:
+
+```bash
+python3 manga_gui.py
+```
+
+**🎯 GUI Features:**
+- **📁 Folder Selection**: Click "Browse" to select your manga folder
+- **🎛️ Mode Selection**: Choose between Hybrid (recommended), Volumes, or Chapters
+- **⚙️ Options**: Toggle "Delete source images after conversion" if desired
+- **▶️ Convert**: Click "Convert" to start processing
+- **📊 Live Progress**: Watch real-time conversion progress and logs
+- **❌ Cancel Anytime**: Stop processing with the "Cancel" button
+
+**🛡️ Safety Features:**
+- Confirmation dialog before deleting source images
+- Visual warnings for destructive operations
+- Detailed error messages and troubleshooting guidance
+- Non-blocking interface - GUI remains responsive during processing
+
+### ⌨️ Command-Line Interface (For Advanced Users & Automation)
+
+#### 📝 Basic Syntax
 
 ```bash
 python3 manga_pdf_converter.py <path_to_manga_folder> [--mode MODE] [--delete-images]
 ```
 
-### 🎯 Processing Modes
+#### 🎯 Processing Modes
 
-#### 1. 🔄 Hybrid Mode (Default)
+##### 1. 🔄 Hybrid Mode (Default)
 The smart choice for mixed organisation patterns - now the default mode.
 
 ```bash
@@ -98,7 +152,7 @@ Naruto/
 - Complex folder hierarchies
 - **Most versatile option - works with any organisation**
 
-#### 2. 📚 Volumes Mode
+##### 2. 📚 Volumes Mode
 Perfect for manga organised with volume numbering systems.
 
 ```bash
@@ -127,7 +181,7 @@ One Piece/
 - Scanlations organised by volume
 - Series with clear volume divisions
 
-#### 3. 📖 Chapters Mode
+##### 3. 📖 Chapters Mode
 Ideal for chapter-by-chapter organisation.
 
 ```bash
@@ -157,7 +211,7 @@ Attack on Titan/
 - Web manga
 - Individual chapter collections
 
-### 🗑️ Image Deletion Option
+#### 🗑️ Image Deletion Option
 
 **⚠️ Use with caution!** The `--delete-images` flag will remove source images after successful PDF conversion:
 
@@ -208,7 +262,17 @@ The script creates a clean, organised output structure:
 
 ### 🎨 Converting Different Manga Types
 
-#### **🔄 Mixed Collection (Recommended)**
+#### **🖥️ Using the GUI (Recommended)**
+```bash
+# Launch the graphical interface
+python3 manga_gui.py
+```
+1. Click "Browse" and select your manga folder
+2. Choose processing mode (Hybrid recommended)
+3. Optionally enable "Delete source images after conversion"
+4. Click "Convert" and watch the progress
+
+#### **🔄 Mixed Collection (Command Line)**
 ```bash
 # Default hybrid mode - handles any organisation
 python3 manga_pdf_converter.py "/Users/reader/Manga/My Collection"
@@ -286,6 +350,7 @@ python3 manga_pdf_converter.py "/path/to/test/manga" --mode chapters
 - **💾 Memory Management**: Efficiently handles large image collections
 - **📊 Progress Feedback**: Real-time status updates during processing
 - **🗑️ Safe Deletion**: Only removes files after successful conversion
+- **🎨 GUI Threading**: Non-blocking interface with responsive controls
 
 ## 🚨 Error Handling & Troubleshooting
 
@@ -319,6 +384,16 @@ python3 manga_pdf_converter.py "/path/to/test/manga" --mode chapters
    • Close other applications
    • Increase system virtual memory
    • Process one series at a time
+```
+
+#### **GUI won't start**
+```
+❌ Problem: GUI application fails to launch
+✅ Solution:
+   • Ensure PyQt5 is installed: pip install PyQt5
+   • Check Python version (3.6+ required)
+   • Try running from command line to see error messages
+   • Fall back to CLI version if GUI issues persist
 ```
 
 #### **PDFs not generating**
@@ -372,7 +447,7 @@ python3 manga_pdf_converter.py "/path/to/test/manga" --mode chapters
 - [ ] **Avoid --delete-images initially** - Test conversion quality first
 
 ### ⚡ During Processing
-- [ ] **Monitor progress** - Watch console output for errors
+- [ ] **Monitor progress** - Watch console output or GUI logs for errors
 - [ ] **Don't interrupt** - Let the process complete fully
 - [ ] **Check system resources** - Ensure adequate memory/CPU
 - [ ] **Be patient** - Large collections take time
@@ -407,6 +482,14 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 🔄 Changelog
 
+### v1.1.0
+- **🖥️ NEW: Graphical User Interface** - Modern desktop application with PyQt5
+- **🎨 Dark Theme** - Eye-friendly modern interface design
+- **⚡ Threading Support** - Non-blocking GUI with responsive controls
+- **📊 Real-time Progress** - Live logging and progress indicators
+- **🛡️ Enhanced Safety** - Confirmation dialogs and visual warnings
+- **❌ Cancellation Support** - Stop processing gracefully at any time
+
 ### v1.0.2
 - **🐛 Fixed critical bug in hybrid mode** - Removed duplicate processing calls
 - **🔧 Code refactoring** - Added cleanup helper function to eliminate duplication
@@ -439,6 +522,8 @@ If you encounter any issues or have questions, please:
 ## ⭐ Acknowledgements
 
 - Built with [Pillow](https://pillow.readthedocs.io/) for image processing  
+- GUI built with [PyQt5](https://pypi.org/project/PyQt5/) for cross-platform desktop interface
+- Application icon features Pochita from Chainsaw Man by Tatsuki Fujimoto.
 - Inspired by the need to organise digital manga collections  
 
 ---
@@ -447,16 +532,18 @@ If you encounter any issues or have questions, please:
 
 This started as a personal solution to a very specific problem: I had thousands of manga images scattered across different folder structures, and I wanted to read them comfortably on my tablet. What began as a simple script to combine images into PDFs evolved into a comprehensive tool that handles the various ways manga collections are organised.
 
+The addition of the GUI makes it accessible to users who prefer visual interfaces while maintaining the powerful command-line version for automation and advanced use cases.
+
 ## 🔮 Future Enhancements
 
 This project is actively evolving! Here are the planned improvements and features coming in future releases:
 
-### 🖥️ Graphical User Interface (GUI)
-- **🎨 Modern Interface**: Clean, intuitive desktop application with drag-and-drop functionality
-- **👁️ Visual Progress**: Real-time progress bars and conversion status indicators
-- **📁 Folder Browser**: Built-in directory selection with preview capabilities
-- **⚙️ Settings Panel**: Easy configuration of processing modes, output options, and preferences
-- **📊 Batch Processing**: Queue multiple manga series for conversion with priority management
+### 🖥️ GUI Enhancements
+- **📱 Responsive Design**: Better layout scaling for different screen sizes
+- **🎨 Theme Options**: Multiple colour themes and customisation options
+- **📁 Drag-and-Drop**: Direct folder dropping onto the interface
+- **📊 Advanced Progress**: Detailed progress indicators with ETA and file counts
+- **⚙️ Settings Persistence**: Remember user preferences between sessions
 - **🔍 Preview Mode**: Preview folder structure and expected output before processing
 
 ### 📦 Standalone Application
@@ -488,11 +575,11 @@ This project is actively evolving! Here are the planned improvements and feature
 
 ### 🗓️ Development Roadmap
 
-#### Phase 1: GUI Foundation (Next Major Release)
-- [ ] Basic desktop GUI with core functionality
-- [ ] Drag-and-drop folder selection
-- [ ] Visual processing indicators
-- [ ] Settings management interface
+#### Phase 1: GUI Enhancements (Next Release)
+- [ ] Drag-and-drop functionality
+- [ ] Settings persistence and user preferences
+- [ ] Enhanced progress indicators with detailed statistics
+- [ ] Multiple theme options
 
 #### Phase 2: Application Packaging (Following Release)
 - [ ] Standalone executables for major platforms
@@ -515,7 +602,7 @@ Have ideas for features you'd like to see? Your feedback helps shape the develop
 - **🧪 Beta Testing**: Get early access to new features and provide feedback
 - **🔧 Technical Input**: Contribute to architecture and implementation decisions
 
-The goal is to make a comprehensive and user-friendly manga organisation tool available, suitable for both casual readers and serious collectors with massive libraries, I want this to be as painless as possible for everyone who loves digital reading!
+The goal is to make a comprehensive and user-friendly manga organisation tool available, suitable for both casual readers and serious collectors with massive libraries. I want this to be as painless as possible for everyone who loves digital reading!
 
 ### 🌟 Why This Tool Exists
 - **📱 Digital Reading**: Perfect PDFs for tablets and e-readers  
@@ -524,6 +611,7 @@ The goal is to make a comprehensive and user-friendly manga organisation tool av
 - **🔄 Flexibility**: Handles different organisation schemes  
 - **⚡ Automation**: No more manual PDF creation
 - **🧹 Space Management**: Optional cleanup to save storage
+- **🖥️ User-Friendly**: Both GUI and CLI options for all skill levels
 
 ### 🤝 Community
 If you find this useful for your own manga organisation, that's awesome! Feel free to:  
