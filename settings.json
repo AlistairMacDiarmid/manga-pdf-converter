@@ -1,0 +1,12 @@
+{
+    "pdf_quality": 100,
+    "image_processing": "keep_original",
+    "pdf_compression": false,
+    "resize_images": false,
+    "max_width": 1920,
+    "max_height": 1080,
+    "output_folder": "",
+    "auto_open_pdf": false,
+    "backup_originals": false,
+    "delete_after_conversion": true
+}
