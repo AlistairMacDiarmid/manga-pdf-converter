@@ -8,6 +8,6 @@
     "output_folder": "",
     "auto_open_pdf": false,
     "backup_originals": false,
-    "delete_after_conversion": true,
+    "delete_after_conversion": false,
     "theme": "light"
 }

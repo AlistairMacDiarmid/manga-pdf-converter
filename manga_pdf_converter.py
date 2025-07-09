@@ -91,25 +91,41 @@ def get_all_chapter_folders(root):
 def get_hybrid_groups(root):
     """
     groups folders based on whether they belong to a volume or are standalone chapters.
-    Returns a dict like { "Vol.6": [folder_path1, folder_path2], "50.": [folder_path3] }
+    for folders like "Volume 1 Chapter 1 chapter name", groups all chapters from volume 1 together.
+    returns a dict like { "Volume 1": [folder_path1, folder_path2], "standalone_chapter": [folder_path] }
     """
     logger.debug(f"Getting hybrid groups from: {root}")
     hybrid_groups = defaultdict(list)
-    volume_pattern = re.compile(r'^(Vol\.?\s*\d+)', re.IGNORECASE)
+
+    #"Volume X Chapter Y" format pattern
+    volume_chapter_pattern = re.compile(r'^volume\s+(\d+)\s+chapter\s+\d+', re.IGNORECASE)
+    #pattern for simple volume folders (v1, vol1, volume 1)
+    simple_volume_pattern = re.compile(r'^(v|vol|volume)\.?\s*(\d+)', re.IGNORECASE)
 
     try:
         for folder in sorted(os.listdir(root)):
             full_path = os.path.join(root, folder)
             if os.path.isdir(full_path):
-                match = volume_pattern.match(folder)
-                if match:
-                    volume = match.group(1).replace(" ", "").replace("Vol.", "Vol")
-                    hybrid_groups[volume].append(full_path)
-                    logger.debug(f"found volume folder for hybrid: {folder} -> {volume}")
+                #check for "Volume X Chapter Y" format first
+                volume_chapter_match = volume_chapter_pattern.match(folder)
+                if volume_chapter_match:
+                    volume_number = volume_chapter_match.group(1)
+                    volume_key = f"Volume {volume_number}"
+                    hybrid_groups[volume_key].append(full_path)
+                    logger.debug(f"found volume chapter folder: {folder} -> {volume_key}")
                 else:
-                    safe_name = re.sub(r'[<>:"/\\|?*]', '_', folder)
-                    hybrid_groups[safe_name].append(full_path)
-                    logger.debug(f"found standalone chapter for hybrid: {folder} -> {safe_name}")
+                    #check for simple volume format (v1, vol1, volume1)
+                    simple_volume_match = simple_volume_pattern.match(folder)
+                    if simple_volume_match:
+                        volume_number = simple_volume_match.group(2)
+                        volume_key = f"Volume {volume_number}"
+                        hybrid_groups[volume_key].append(full_path)
+                        logger.debug(f"found simple volume folder: {folder} -> {volume_key}")
+                    else:
+                        # standalone chapter or other folder
+                        safe_name = re.sub(r'[<>:"/\\|?*]', '_', folder)
+                        hybrid_groups[safe_name].append(full_path)
+                        logger.debug(f"found standalone chapter: {folder} -> {safe_name}")
     except OSError as e:
         logger.error(f"error accessing directory {root}: {e}")
         return defaultdict(list)
