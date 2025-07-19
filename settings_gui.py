@@ -1,14 +1,14 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5 import Qt
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QHBoxLayout, QPushButton, QGroupBox, QLabel, QLineEdit, \
-    QCheckBox, QButtonGroup, QRadioButton, QFileDialog, QMessageBox, QDialog
+    QCheckBox, QButtonGroup, QRadioButton, QFileDialog, QMessageBox
 
-from utils.styles import load_stylesheet
-from utils.settings import load_settings, save_settings
+from manga_gui import DARK_THEME_STYLESHEET, LIGHT_THEME_STYLESHEET
 
 
-class SettingsGUI(QDialog):
+class SettingsGUI(QWidget):
 
     finished = pyqtSignal()
     settings_saved = pyqtSignal()
@@ -17,13 +17,17 @@ class SettingsGUI(QDialog):
     def __init__(self, parent=None, current_settings=None):
         super().__init__(parent)
         self.parent = parent
-        self.current_settings = load_settings() if current_settings is None else current_settings
+        self.current_settings = current_settings or self.get_default_settings()
+        self.is_dark = self.current_settings.get("theme", "dark") == "dark"
         self.init_ui()
         self.apply_theme()
         self.load_settings()
         self._settings_saved = False
 
-
+    def themed(self, bg=None, fg=None):
+        bg = bg or ("#353535" if self.is_dark else "#ffffff")
+        fg = fg or ("#ffffff" if self.is_dark else "#2b2b2b")
+        return f"background-color: {bg}; color: {fg};"
 
     def get_default_settings(self):
         """returns the default settings"""
@@ -88,7 +92,6 @@ class SettingsGUI(QDialog):
         appearance_tab = self.create_appearance_settings_tab()
         tab_widget.addTab(appearance_tab, "appearance")
 
-
     def create_pdf_settings_tab(self):
         """create PDF settings tab"""
         tab = QWidget()
@@ -103,10 +106,10 @@ class SettingsGUI(QDialog):
         quality_label = QLabel("quality (1-100):")
         self.quality_input = QLineEdit()
         self.quality_input.setPlaceholderText("85")
-
+        quality_label.setStyleSheet(f"{self.themed()}")
 
         quality_desc = QLabel("higher values = better quality but larger file size")
-        quality_desc.setStyleSheet(f"font-size: 11px;")
+        quality_desc.setStyleSheet(f"font-size: 11px;{self.themed()}")
 
         quality_layout.addWidget(quality_label)
         quality_layout.addWidget(self.quality_input)
@@ -119,6 +122,7 @@ class SettingsGUI(QDialog):
         options_group.setLayout(options_layout)
 
         self.compression_checkbox = QCheckBox("Enable PDF compression")
+        self.compression_checkbox.setStyleSheet(self.themed())
         options_layout.addWidget(self.compression_checkbox)
 
         layout.addWidget(options_group)
@@ -138,14 +142,17 @@ class SettingsGUI(QDialog):
         processing_group.setLayout(processing_layout)
 
         process_desc = QLabel("how input images should be processed before adding to PDF:")
-        process_desc.setStyleSheet(f"font-size: 12px; margin-bottom: 10px;")
+        process_desc.setStyleSheet(f"font-size: 12px; margin-bottom: 10px;{self.themed()}")
         processing_layout.addWidget(process_desc)
 
         self.format_group = QButtonGroup()
 
         self.keep_original_radio = QRadioButton("keep original format (fastest)")
+        self.keep_original_radio.setStyleSheet(self.themed())
         self.jpeg_radio = QRadioButton("convert to JPEG (smaller PDF size)")
+        self.jpeg_radio.setStyleSheet(self.themed())
         self.png_radio = QRadioButton("convert to PNG (preserve transparency)")
+        self.png_radio.setStyleSheet(self.themed())
 
         self.format_group.addButton(self.keep_original_radio, 0)
         self.format_group.addButton(self.jpeg_radio, 1)
@@ -162,20 +169,23 @@ class SettingsGUI(QDialog):
         resolution_group.setLayout(resolution_layout)
 
         res_desc = QLabel("resize large images to reduce PDF file size:")
-        res_desc.setStyleSheet(f"font-size: 12px; margin-bottom: 10px;")
+        res_desc.setStyleSheet(f"font-size: 12px; margin-bottom: 10px;{self.themed()}")
         resolution_layout.addWidget(res_desc)
 
         self.resize_checkbox = QCheckBox("enable image resizing")
+        self.resize_checkbox.setStyleSheet(self.themed())
         resolution_layout.addWidget(self.resize_checkbox)
 
         size_layout = QHBoxLayout()
 
         width_label = QLabel("max width:")
+        width_label.setStyleSheet(f"{self.themed()}")
         self.width_input = QLineEdit()
         self.width_input.setPlaceholderText("1920")
         self.width_input.setEnabled(False)
 
         height_label = QLabel("max height:")
+        height_label.setStyleSheet(f"{self.themed()}")
         self.height_input = QLineEdit()
         self.height_input.setPlaceholderText("1080")
         self.height_input.setEnabled(False)
@@ -207,6 +217,7 @@ class SettingsGUI(QDialog):
         folder_group.setLayout(folder_layout)
 
         folder_label = QLabel("custom output folder (optional):")
+        folder_label.setStyleSheet(f"{self.themed()}")
         folder_layout.addWidget(folder_label)
 
         folder_input_layout = QHBoxLayout()
@@ -227,11 +238,14 @@ class SettingsGUI(QDialog):
         behavior_group.setLayout(behavior_layout)
 
         self.auto_open_checkbox = QCheckBox("auto-open PDF files after conversion")
+        self.auto_open_checkbox.setStyleSheet(self.themed())
         self.backup_checkbox = QCheckBox("create backup of original images before conversion")
+        self.backup_checkbox.setStyleSheet(self.themed())
         self.delete_checkbox = QCheckBox("delete source images after successful conversion")
+        self.delete_checkbox.setStyleSheet(self.themed())
 
         delete_warning = QLabel("⚠️ warning: deletion cannot be undone!")
-        delete_warning.setStyleSheet(f"font-size: 12px; font-weight: bold;color:#d32f2f;")
+        delete_warning.setStyleSheet(f"font-size: 12px; font-weight: bold;{self.themed()} color:#d32f2f;")
 
         behavior_layout.addWidget(self.auto_open_checkbox)
         behavior_layout.addWidget(self.backup_checkbox)
@@ -254,7 +268,9 @@ class SettingsGUI(QDialog):
 
         self.theme_group = QButtonGroup()
         self.dark_theme_radio = QRadioButton("dark")
+        self.dark_theme_radio.setStyleSheet(self.themed())
         self.light_theme_radio = QRadioButton("light")
+        self.light_theme_radio.setStyleSheet(self.themed())
 
         self.theme_group.addButton(self.dark_theme_radio)
         self.theme_group.addButton(self.light_theme_radio)
@@ -267,6 +283,12 @@ class SettingsGUI(QDialog):
 
         return tab
 
+    def apply_theme(self):
+        theme = self.current_settings.get("theme", "dark")
+        if theme == "dark":
+            self.setStyleSheet(DARK_THEME_STYLESHEET)
+        else:
+            self.setStyleSheet(LIGHT_THEME_STYLESHEET)
 
     def load_settings(self):
         """load current settings into the UI"""
@@ -355,9 +377,6 @@ class SettingsGUI(QDialog):
             'theme': theme
         })
 
-
-        save_settings(self.current_settings)
-
         # update parent window if it exists
         if self.parent and hasattr(self.parent, 'settings'):
             self.parent.settings = self.current_settings
@@ -393,14 +412,3 @@ class SettingsGUI(QDialog):
         """override accept - this should not be called directly"""
         #just close the window, the closeEvent will handle the signal
         self.close()
-
-    def apply_theme(self):
-        theme = self.current_settings.get("theme", "dark")
-        stylesheet = load_stylesheet(theme)
-        if not stylesheet:
-            print(f"warning: empty stylesheet for theme '{theme}', skipping apply.")
-            return
-        try:
-            self.setStyleSheet(stylesheet)
-        except Exception as e:
-            print(f"error applying stylesheet: {e}")

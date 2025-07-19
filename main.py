@@ -1,3 +1,4 @@
+import os.path
 import sys
 import logging
 
@@ -15,9 +16,13 @@ def main():
     logging.getLogger("PIL").setLevel(logging.WARNING)
 
     app = QApplication(sys.argv)
+
+    #icon path
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    icon_path = os.path.join(base_dir, "resources", "icon.png")
+    app.setWindowIcon(QIcon(icon_path))
     window = MainWindow()
     window.show()
-    window.setWindowIcon(QIcon("icon.png"))
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

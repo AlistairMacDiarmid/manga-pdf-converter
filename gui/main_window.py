@@ -1,4 +1,6 @@
+import os.path
 
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (
     QMainWindow, QFileDialog, QVBoxLayout, QHBoxLayout, QWidget,
     QLabel, QLineEdit, QPushButton, QGroupBox, QRadioButton,
@@ -142,6 +144,7 @@ class MainWindow(QMainWindow):
 
         # create and start the converter thread
         self.converter_thread = ConverterThread(path, mode, delete_images, debug, settings=self.settings)
+        self.converter_thread.error_occurred.connect(self.show_error_image) #connect to error signal
         self.converter_thread.finished.connect(self.on_conversion_finished)
         self.converter_thread.start()
 
@@ -149,6 +152,9 @@ class MainWindow(QMainWindow):
         """
         called when the converter thread finishes; update UI accordingly.
         """
+        if hasattr(self,'error_image_label'):
+            self.error_image_label.setVisible(False)
+
         self.progress_bar.setVisible(False)
         self.log_text.append("✅ conversion complete.")
 
@@ -206,12 +212,27 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'settings_dialog'):
             del self.settings_dialog
 
-
-
     def apply_theme(self):
         theme = self.settings.get("theme", "dark")
         stylesheet = load_stylesheet(theme)
         self.setStyleSheet(stylesheet)
+
+    def show_error_image(self, message):
+        self.log_text.append(f"❌ conversion error: {message}")
+        if not hasattr(self,'error_image_label'):
+            self.error_image_label = QLabel(self)
+            self.error_image_label.setAlignment(Qt.AlignCenter)
+            self.layout().addWidget(self.error_image_label)
+
+            image_path = os.path.join(os.path.dirname(__file__),"../resources/error_asa.jpg")
+            pixmap = QPixmap(image_path)
+
+            if pixmap.isNull():
+                self.error_image_label.setText("⚠️ Conversion failed and image could not be loaded.")
+            else:
+                self.error_image_label.setPixmap(pixmap.scaledToWidth(400, Qt.SmoothTransformation))
+
+            self.error_image_label.setVisible(True)
 
 
 
