@@ -19,6 +19,7 @@ from utils.settings import load_settings, save_settings
 
 logger = logging.getLogger("MangaPDFConverter")
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -32,14 +33,13 @@ class MainWindow(QMainWindow):
         self.init_ui()
         self.converter_thread = None  # will hold background conversion thread
 
-
     def init_ui(self):
         """
         create and arrange UI widgets for the main window.
         """
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
-        layout = QVBoxLayout(main_widget)
+        self.main_layout = QVBoxLayout(main_widget)  # Store reference to main layout
 
         # input path selection controls
         input_layout = QHBoxLayout()
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         input_layout.addWidget(QLabel("Manga Folder:"))
         input_layout.addWidget(self.input_path_edit)
         input_layout.addWidget(browse_btn)
-        layout.addLayout(input_layout)
+        self.main_layout.addLayout(input_layout)
 
         # conversion mode radio buttons grouped in QGroupBox
         self.mode_group = QGroupBox("Conversion Mode")
@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         mode_layout.addWidget(self.mode_radio_chapters)
         mode_layout.addWidget(self.mode_radio_hybrid)
         self.mode_group.setLayout(mode_layout)
-        layout.addWidget(self.mode_group)
+        self.main_layout.addWidget(self.mode_group)
 
         # options group with checkboxes
         self.options_group = QGroupBox("Options")
@@ -72,39 +72,44 @@ class MainWindow(QMainWindow):
         options_layout.addWidget(self.delete_check)
         options_layout.addWidget(self.debug_check)
         self.options_group.setLayout(options_layout)
-        layout.addWidget(self.options_group)
+        self.main_layout.addWidget(self.options_group)
 
         # progress bar, initially hidden
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        layout.addWidget(self.progress_bar)
+        self.main_layout.addWidget(self.progress_bar)
 
         # read-only text area for logs
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
-        layout.addWidget(self.log_text)
+        self.main_layout.addWidget(self.log_text)
 
         # convert button to start the process
         self.convert_btn = QPushButton("Convert to PDF")
         self.convert_btn.clicked.connect(self.start_conversion)
-        layout.addWidget(self.convert_btn)
+        self.main_layout.addWidget(self.convert_btn)
 
         # set up logging to append to the QTextEdit widget
         self.logger_handler = QTextEditLogger(self.log_text)
         logging.getLogger("MangaPDFConverter").addHandler(self.logger_handler)
 
-        #create menu bar
+        # Initialize error image label (but keep it hidden initially)
+        self.error_image_label = QLabel(self)
+        self.error_image_label.setAlignment(Qt.AlignCenter)
+        self.error_image_label.setVisible(False)
+
+        # create menu bar
         menu_bar = self.menuBar()
 
-        #create "Options" menu
+        # create "Options" menu
         options_menu = menu_bar.addMenu("&options")
 
-        #create settings action
+        # create settings action
         settings_action = QAction("settings", self)
         settings_action.setStatusTip("open settings dialog")
         settings_action.triggered.connect(self.open_settings)
 
-        #add action to menu
+        # add action to menu
         options_menu.addAction(settings_action)
 
     def browse_input(self):
@@ -119,6 +124,10 @@ class MainWindow(QMainWindow):
         """
         start the conversion process on a background thread with selected options.
         """
+        # Hide error image if it was previously shown
+        if hasattr(self, 'error_image_label'):
+            self.error_image_label.setVisible(False)
+
         # prevent starting multiple conversions simultaneously
         if self.converter_thread and self.converter_thread.isRunning():
             return
@@ -144,19 +153,61 @@ class MainWindow(QMainWindow):
 
         # create and start the converter thread
         self.converter_thread = ConverterThread(path, mode, delete_images, debug, settings=self.settings)
-        self.converter_thread.error_occurred.connect(self.show_error_image) #connect to error signal
+
+        # Make sure the signal is connected
+        self.converter_thread.error_occurred.connect(self.show_error_image)
         self.converter_thread.finished.connect(self.on_conversion_finished)
+
+        logger.info(f"Starting conversion with mode: {mode}, path: {path}")
         self.converter_thread.start()
 
     def on_conversion_finished(self):
         """
         called when the converter thread finishes; update UI accordingly.
         """
-        if hasattr(self,'error_image_label'):
-            self.error_image_label.setVisible(False)
-
         self.progress_bar.setVisible(False)
-        self.log_text.append("✅ conversion complete.")
+        # Don't hide the error image here - let it stay visible if there was an error
+        if not hasattr(self, 'error_occurred') or not self.error_occurred:
+            self.log_text.append("✅ conversion complete.")
+
+    def show_error_image(self, message):
+        """
+        display error message and show error image.
+        """
+        logger.error(f"Error signal received: {message}")
+
+        #set flag to indicate error occurred
+        self.error_occurred = True
+
+        #load and display error image
+        image_path = os.path.join(os.path.dirname(__file__), "../resources/error_asa.jpg")
+        logger.info(f"attempting to load error image from: {image_path}")
+
+        if os.path.exists(image_path):
+            pixmap = QPixmap(image_path)
+            if not pixmap.isNull():
+                # scale the image and display it
+                scaled_pixmap = pixmap.scaledToWidth(400, Qt.SmoothTransformation)
+                self.error_image_label.setPixmap(scaled_pixmap)
+                self.error_image_label.setText("")  #clear any previous text
+                logger.info("error image loaded and displayed successfully")
+            else:
+                logger.warning("failed to load pixmap from image file")
+                self.error_image_label.setText("⚠️ conversion failed and error image could not be loaded.")
+                self.error_image_label.setPixmap(QPixmap())  # Clear any previous pixmap
+        else:
+            logger.warning(f"error image file not found at: {image_path}")
+            self.error_image_label.setText("⚠️ conversion failed and error image could not be found.")
+            self.error_image_label.setPixmap(QPixmap())  # Clear any previous pixmap
+
+        # Position as overlay at top center
+        self.error_image_label.resize(400, 300)  # Set appropriate size
+        x = (self.width() - self.error_image_label.width()) // 2
+        y = 10  # Small margin from top
+        self.error_image_label.move(x, y)
+        self.error_image_label.raise_()  # Bring to front
+        self.error_image_label.setVisible(True)
+        logger.info("error image label set to visible")
 
     def open_settings(self):
         self.apply_blur_effect()
@@ -174,7 +225,7 @@ class MainWindow(QMainWindow):
         self.on_settings_closed()
 
     def on_settings_closed(self):
-       self.remove_blur_effect()
+        self.remove_blur_effect()
 
     def apply_blur_effect(self):
         if hasattr(self, 'blur_effect') and self.blur_effect:
@@ -184,7 +235,7 @@ class MainWindow(QMainWindow):
         self.blur_effect.setBlurRadius(0)
         self.centralWidget().setGraphicsEffect(self.blur_effect)
 
-        #animate blur in
+        # animate blur in
         self.blur_animation = QPropertyAnimation(self.blur_effect, b"blurRadius")
         self.blur_animation.setDuration(250)
         self.blur_animation.setStartValue(0)
@@ -195,7 +246,7 @@ class MainWindow(QMainWindow):
     def remove_blur_effect(self):
         """safely remove blur effect with animation"""
         if hasattr(self, 'blur_effect') and self.blur_effect:
-            #animate blur out
+            # animate blur out
             self.blur_out_animation = QPropertyAnimation(self.blur_effect, b"blurRadius")
             self.blur_out_animation.setDuration(200)
             self.blur_out_animation.setStartValue(12)
@@ -216,24 +267,3 @@ class MainWindow(QMainWindow):
         theme = self.settings.get("theme", "dark")
         stylesheet = load_stylesheet(theme)
         self.setStyleSheet(stylesheet)
-
-    def show_error_image(self, message):
-        self.log_text.append(f"❌ conversion error: {message}")
-        if not hasattr(self,'error_image_label'):
-            self.error_image_label = QLabel(self)
-            self.error_image_label.setAlignment(Qt.AlignCenter)
-            self.layout().addWidget(self.error_image_label)
-
-            image_path = os.path.join(os.path.dirname(__file__),"../resources/error_asa.jpg")
-            pixmap = QPixmap(image_path)
-
-            if pixmap.isNull():
-                self.error_image_label.setText("⚠️ Conversion failed and image could not be loaded.")
-            else:
-                self.error_image_label.setPixmap(pixmap.scaledToWidth(400, Qt.SmoothTransformation))
-
-            self.error_image_label.setVisible(True)
-
-
-
-
